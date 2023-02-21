@@ -14,6 +14,7 @@ data_c2_train = pd.read_csv(
     r"data\Classification\LS_Group24\Class2.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
 data_c3_train = pd.read_csv(
     r"data\Classification\LS_Group24\Class3.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
+
 data_c1_train.insert(loc=0,
                      column='1',
                      value=[1 for i in range(350)])

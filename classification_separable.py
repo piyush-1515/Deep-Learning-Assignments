@@ -1,17 +1,19 @@
 # %%
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 import pandas as pd
 import numpy as np
 from numpy import linalg as LA
 import matplotlib.pyplot as plt
 
 # %%
-
 data_c1_train = pd.read_csv(
-    r"Assignment1\data\Classification\LS_Group24\Class1.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
+    r"Assignment1\Group19\Classification\LS_Group19\Class1.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
 data_c2_train = pd.read_csv(
-    r"Assignment1\data\Classification\LS_Group24\Class2.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
+    r"Assignment1\Group19\Classification\LS_Group19\Class2.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
 data_c3_train = pd.read_csv(
-    r"Assignment1\data\Classification\LS_Group24\Class3.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
+    r"Assignment1\Group19\Classification\LS_Group19\Class3.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
 data_c1_train.insert(loc=0,
                      column='1',
                      value=[1 for i in range(350)])
@@ -24,11 +26,11 @@ data_c3_train.insert(loc=0,
 
 # %%
 data_c1_test = pd.read_csv(
-    r"Assignment1\data\Classification\LS_Group24\Class1.txt", sep=" ", names=['x', 'y']).iloc[351:, :]
+    r"Assignment1\Group19\Classification\LS_Group19\Class1.txt", sep=" ", names=['x', 'y']).iloc[351:, :]
 data_c2_test = pd.read_csv(
-    r"Assignment1\data\Classification\LS_Group24\Class2.txt", sep=" ", names=['x', 'y']).iloc[351:, :]
+    r"Assignment1\Group19\Classification\LS_Group19\Class2.txt", sep=" ", names=['x', 'y']).iloc[351:, :]
 data_c3_test = pd.read_csv(
-    r"Assignment1\data\Classification\LS_Group24\Class3.txt", sep=" ", names=['x', 'y']).iloc[351:, :]
+    r"Assignment1\Group19\Classification\LS_Group19\Class3.txt", sep=" ", names=['x', 'y']).iloc[351:, :]
 data_c1_test.insert(loc=0,
                     column='1',
                     value=[1 for i in range(149)])
@@ -43,7 +45,7 @@ data_c3_test.insert(loc=0,
 
 w12 = np.array([1.0, 1.0, 1.0])
 w13 = np.array([1.0, 1.0, 1.0])
-w23 = np.array([1.0, 1.0, 1.0])
+w23 = np.array([1.6,2.3,0.9])
 inst_errors = []
 avg_error_12 = []
 avg_error_13 = []
@@ -60,7 +62,7 @@ def delta_w(eta, w, y, s, x):
 def neuron(eta, w, x, y):
     a = np.dot(w, x)
     s = activation_function(a)
-    E = ((y-s)**2)/2
+    E = ((y-s)**2)/2 # instantaneous error
     inst_errors.append(E)
     w = delta_w(eta, w, y, s, x)
     return w
@@ -103,8 +105,22 @@ for epoch in range(1,21):
 #%%
 
 plt.bar([i for i in range(1,21)], avg_error_12)
+plt.title("Classifier between class 1 and class 2")
+plt.xlabel("Epoch")
+plt.ylabel("Average Error")
+plt.show()
+
 plt.bar([i for i in range(1,21)], avg_error_13)
+plt.title("Classifier between class 1 and class 3")
+plt.xlabel("Epoch")
+plt.ylabel("Average Error")
+plt.show()
+
 plt.bar([i for i in range(1,21)], avg_error_23)
+plt.title("Classifier between class 2 and class 3")
+plt.xlabel("Epoch")
+plt.ylabel("Average Error")
+plt.show()
 
 #%%
 plt.scatter(data_c1_train.x, data_c1_train.y)
@@ -112,6 +128,7 @@ plt.scatter(data_c2_train.x, data_c2_train.y)
 plt.scatter(data_c3_train.x, data_c3_train.y)
 plt.legend(['Class 1', 'Class 2', 'Class 3'])
 plt.axis('off')
+plt.show()
 
 #%%
 # Creating one dataframe for testing data
@@ -151,7 +168,10 @@ predicted_class = np.array(predicted_class)
 
 #%%
 from sklearn.metrics import accuracy_score
-accuracy_score(test_data["class"], predicted_class)
+print("Accuracy = ",accuracy_score(test_data["class"], predicted_class))
+
+from sklearn.metrics import confusion_matrix
+print("Confusion Matrix = \n",confusion_matrix(test_data['class'], predicted_class))
 
 #%%
 
@@ -194,9 +214,26 @@ for i in xx:
         # predicted_class.append(np.bincount(freqs).argmax())
         predicted_mesh = predicted_mesh.append({'x':cord[1], 'y':cord[2], 'pred':np.bincount(freqs).argmax()}, ignore_index=True)
 
-plt.scatter(predicted_mesh['x'], predicted_mesh['y'], c = predicted_mesh['pred'], alpha=0.2)
-plt.scatter(data_c1_train.x, data_c1_train.y)
-plt.scatter(data_c2_train.x, data_c2_train.y)
-plt.scatter(data_c3_train.x, data_c3_train.y)
-plt.legend(['Class 1', 'Class 2', 'Class 3'])
-plt.axis('off')
+#%%
+training_data = pd.concat([data_c1_train,data_c2_train,data_c3_train])
+classes = []
+for i in range(3):
+    for j in range(350):
+        classes.append(i+1)
+training_data['class'] = classes
+
+#%%
+
+fig, ax = plt.subplots()
+
+scatter1 = ax.scatter(predicted_mesh['x'], predicted_mesh['y'], c=predicted_mesh['pred'],alpha=0.2)
+scatter2 = ax.scatter(training_data['x'], training_data['y'], c=training_data['class'],alpha=0.8)
+# produce a legend with the unique colors from the scatter
+legend1 = ax.legend(*scatter1.legend_elements(),
+                    loc="lower left", title="Classes")
+ax.add_artist(legend1)
+
+plt.xlabel("X")
+plt.ylabel("y")
+plt.title("Decision boundaries and Training Data")
+plt.show()

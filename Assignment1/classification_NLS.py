@@ -12,10 +12,12 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # %%
 data = pd.DataFrame(columns = ['x','y'])
 
-with open(r"data\Classification\NLS_Group24.txt") as f:
+with open(r"Group24\Group24\Classification\NLS_Group24.txt") as f:
+    cnt = 0
     while True:
         line = f.readline()
         if not line : break
+        if(line[0] == 'F') : continue
         cords = line.split(' ')
         cords[0] = float(cords[0])
         cords[1] = float(cords[1])
@@ -282,3 +284,5 @@ plt.xlabel("X")
 plt.ylabel("y")
 plt.title("Decision boundaries and Training Data")
 plt.show()
+
+#%%

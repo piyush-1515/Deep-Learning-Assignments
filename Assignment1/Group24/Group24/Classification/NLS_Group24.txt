@@ -1,3 +1,4 @@
+First 300 examples - class1; next 500 examples - class 2 and the last 1000 examples - class3.
 -0.190176 -0.195489 
 -0.208340 0.107337 
 -0.487379 0.131786 

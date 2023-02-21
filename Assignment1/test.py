@@ -8,8 +8,16 @@ from numpy import linalg as LA
 import matplotlib.pyplot as plt
 
 # %%
-data_c1_train = pd.read_csv(
-    r"data\Classification\LS_Group24\Class1.txt", sep=" ", names=['x', 'y'])
-
-data = pd.read_csv(
-    r"data\Classification\NLS_Group24.txt", sep=" ", names=['x', 'y'])
+with open(r"Group24\Group24\Classification\NLS_Group24.txt") as f:
+    cnt = 0
+    while True:
+        line = f.readline()
+        if not line : break
+        # if(line[0] == 'F') : 
+        #     print("It was F word")
+        #     continue
+        print(line[0])
+        # cords = line.split(' ')
+        # cords[0] = float(cords[0])
+        # cords[1] = float(cords[1])
+        # data = data.append({'x':cords[0], 'y':cords[1]}, ignore_index=True)

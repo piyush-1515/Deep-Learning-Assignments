@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 # %%
-data = pd.read_csv(r'Group19\Regression\BivariateData\19.csv', names=['x', 'y', 'z'])
-# data = pd.read_csv(r'data\Regression\BivariateData\24.csv', names=['x', 'y', 'z'])
+data = pd.read_csv(r'Group24\Group24\Regression\BivariateData\24.csv', names=['x', 'y', 'z'])
 target_output = data.z
 data = data.drop(columns=['z'])
 # %%
@@ -93,6 +92,8 @@ plt.scatter(y_train.z, predicted)
 plt.xlabel("Target output")
 plt.ylabel("Predicted Output")
 plt.title("Target output V/S model output (Training)")
+print("Correlation between target and predicted variable for training data")
+print(np.corrcoef(y_train.z, predicted))
 plt.show()
 
 # %%
@@ -127,7 +128,8 @@ plt.xlabel("Target output")
 plt.ylabel("Predicted Output")
 plt.title("Target output V/S model output (Testing)")
 plt.show()
-
+print("Correlation between target and predicted variable for testing data")
+print(np.corrcoef(y_test.z, predicted))
 # %%
 
 plt.bar(['Training', 'Testing'], [train_mse, test_mse], color='maroon', width=0.4)

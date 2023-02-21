@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 # %%
-# data = pd.read_csv(r'Group18\Regression\UnivariateData\18.csv', names=['x', 'y'])
-data = pd.read_csv(r'data\Regression\UnivariateData\24.csv', names=['x', 'y'])
+data = pd.read_csv(r'Group24\Group24\Regression\UnivariateData\24.csv', names=['x', 'y'])
 X, Y = data.x, data.y
 # %%
 

@@ -12,6 +12,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 data = pd.DataFrame(columns=['x', 'y'])
 
 with open(r"Group24\Group24\Classification\NLS_Group24.txt") as f:
+# with open(r"Group19\Group19\Classification\NLS_Group19.txt") as f:
+# with open(r"Group18\Group18\Classification\NLS_Group18.txt") as f:
     cnt = 0
     while True:
         line = f.readline()
@@ -45,6 +47,7 @@ class Layer:
     num_nodes = int
     an = []
     gn = []
+    delta = []
 
     def __init__(self, nodes):
         self.num_nodes = nodes
@@ -55,6 +58,7 @@ class Layer:
 
     def apply_act_func(self):
         self.gn = self.activation_function(np.array(self.an))
+        self.gn[0] = 1
 
 
 class Model:
@@ -71,6 +75,7 @@ class Model:
         for l in self.layers:
             l.an = []
             l.gn = []
+            l.delta = []
 
     def add_layer(self, num_nodes):
         new_layer = Layer(num_nodes)
@@ -112,10 +117,36 @@ class Model:
 
         if(self.num_layers<=3): return
 
-        
-
         # updating weights between input and hidden layer
 
+    def update_wts(self,target):
+        for iter in range(len(self.weights)-1,-1,-1):
+
+            wt_mat = self.weights[iter]
+            delta_mat = np.ones([len(wt_mat), len(wt_mat[0])], float)
+
+            if(iter == len(self.weights)-1):
+                for k in range(1,self.layers[iter+1].num_nodes+1):
+                    fa = self.layers[iter+1].gn[k]
+                    self.layers[iter+1].delta.append((-fa + target[k-1]) * fa * (1 - fa))
+            else :
+                for l in range(1,self.layers[iter+1].num_nodes+1):
+                    gnl = self.layers[iter+1].gn[l]
+                    delta_nl = gnl * (1 - gnl)
+                    sum_del = 0
+                    for k in range(0,self.layers[iter+2].num_nodes):
+                        wlk_mat = self.weights[iter+1]
+                        sum_del += (self.layers[iter+2].delta[k] * wlk_mat[k][l])
+                    delta_nl *= sum_del
+                    self.layers[iter+1].delta.append(delta_nl)
+                
+            for k in range(len(wt_mat)):
+                for j in range(len(wt_mat[0])):
+                    hnj = self.layers[iter].gn[j]
+                    delta = self.layers[iter+1].delta[k]
+                    delta_mat[k][j] = self.eta * delta * hnj
+            self.weights[iter] += delta_mat 
+     
     def fit(self, x, target):
         for i in range(len(x)):
             xn = np.insert(x[i], 0, 1, axis=None)
@@ -131,7 +162,8 @@ class Model:
             inst_error = np.array(
                 self.layers[self.num_layers-1].gn[1:]) - target[i]
             self.total_error.append(np.sum(np.square(inst_error))/2)
-            self.update_weights(target[i])
+            # self.update_weights(target[i])
+            self.update_wts(target[i])
             self.clean_layers()
 
     def classify_batch(self, x):
@@ -170,12 +202,14 @@ class Model:
 # %%
 # Making the model
 nodes_input_layer = 2
-nodes_hidden_layer = 30
+# nodes_hidden_layer1 = 10
+# nodes_hidden_layer2 = 10
 nodes_output_layer = 3
-epochs = 20
+epochs = 10
 FCNN = Model()
 FCNN.add_layer(nodes_input_layer)
-FCNN.add_layer(nodes_hidden_layer)
+FCNN.add_layer(30)
+FCNN.add_layer(30)
 FCNN.add_layer(nodes_output_layer)
 
 # %%

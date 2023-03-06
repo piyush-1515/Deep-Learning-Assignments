@@ -11,26 +11,40 @@ data = pd.read_csv(r'Group24\Group24\Regression\BivariateData\24.csv', names=['x
 target_output = data.z
 data = data.drop(columns=['z'])
 
-X_train, X_test, y_train, y_test = train_test_split(
-    data, target_output, test_size=0.30, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(data, target_output, test_size=0.20, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
 
 # %%
 
 FCNN = Model(0.1,"regression")
+nodes_hidden_layer1 = 5
+# nodes_hidden_layer2 = 6
 FCNN.add_layer(2)
-FCNN.add_layer(5)
-FCNN.add_layer(5)
-FCNN.add_layer(5)
+FCNN.add_layer(nodes_hidden_layer1)
+# FCNN.add_layer(nodes_hidden_layer2)
+# FCNN.add_layer(5)
 FCNN.add_layer(1)
 
 errors = []
+previous_validation_error = 100
+inc_val_er_streak = 0
 while True:
     FCNN.fit(X_train.to_numpy(), y_train.to_numpy().reshape(len(y_train),1))
     errors.append(FCNN.avg_training_error())
     if(len(errors)>1 and abs(errors[len(errors)-1]-errors[len(errors)-2])<0.0001): break
 
+    # Computing the validation error
+    prediction = FCNN.classify_batch(X_val.to_numpy())
+    current_validation_error = mean_squared_error(y_val, prediction)
+    if(previous_validation_error < current_validation_error): 
+        inc_val_er_streak += 1
+        if(inc_val_er_streak >= 3): break
+    inc_val_er_streak = 0        
+    previous_validation_error = current_validation_error
+    FCNN.total_error = []
+
 # %%
-plt.plot(errors)
+plt.plot([i for i in range(1, len(errors)+1)],errors)
 plt.xlabel("Epoch")
 plt.xlabel("Average Error")
 plt.title("Epoch V/S Average error")
@@ -91,9 +105,7 @@ plt.title("Model output and target output for testing data")
 plt.legend(['Model Output', 'Target Output'])
 plt.show()
 
-
 # %%
-
 # Target output vs model output for testing data
 plt.scatter(y_test, predicted)
 plt.xlabel("Target output")
@@ -111,3 +123,48 @@ plt.ylabel("MSE values")
 plt.show()
 
 #%%
+
+fig = plt.figure(figsize=(20, 20))
+fig.suptitle('Hidden Layer 1 (Validation Set)', y=0.925, fontsize=20)
+for l in range(1,nodes_hidden_layer1+1):
+    neuron_activation_value = []
+    for i in range(X_val.shape[0]):
+        neuron_activation_value.append(FCNN.classify_point(X_val.iloc[i].to_numpy())[1][1].gn[l])
+        FCNN.clean_layers()
+
+    ax = fig.add_subplot(4, 4, l, projection='3d', frame_on=True)
+    ax.scatter3D(X_val.x, X_val.y, neuron_activation_value)
+
+    plt.xlabel("Input (x)")
+    plt.ylabel("Input (y)")
+    plt.title("Neuron {}".format(l))
+
+plt.show()
+
+#%%
+fig = plt.figure(figsize=(10, 10))
+fig.suptitle('Hidden Layer 2 (Validation Set)', y=0.925, fontsize=20)
+for l in range(1,nodes_hidden_layer2+1):
+    neuron_activation_value = []
+    for i in range(X_val.shape[0]):
+        neuron_activation_value.append(FCNN.classify_point(X_val.iloc[i].to_numpy())[1][2].gn[l])
+        FCNN.clean_layers()
+
+    ax = fig.add_subplot(2, 3, l, projection='3d', frame_on=True)
+    ax.scatter3D(X_val.x, X_val.y, neuron_activation_value)
+
+    plt.xlabel("Input (x)")
+    plt.ylabel("Input (y)")
+    plt.title("Neuron {}".format(l))
+
+plt.show()
+
+#%%
+# ////////////////////////////////////////
+# best arch: h1=6 h2=6
+# stopping : e_difference <= 0.0001
+# eta = 0.1
+
+# ///////////////////////////////////////
+# for 1 hidden layer having 15 nodes, the model could very well approximate the real function
+# even for 1 hidden layer having only 5, the approximation is incredibly good

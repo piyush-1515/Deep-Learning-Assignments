@@ -80,7 +80,7 @@ test_data['class'] = classes
 epochs = 20
 FCNN = Model(0.01)
 FCNN.add_layer(2)
-FCNN.add_layer(30)
+FCNN.add_layer(15)
 FCNN.add_layer(30)
 FCNN.add_layer(3)
 
@@ -97,6 +97,7 @@ while True:
     # print("Average training error = ", FCNN.avg_training_error())
     errors.append(FCNN.avg_training_error())
     if(len(errors)>1 and abs(errors[len(errors)-1]-errors[len(errors)-2])<0.0001): break
+    FCNN.total_error = []
 
 # %%
 # Plotting epoch vs training error
@@ -177,25 +178,3 @@ plt.title("Decision Regions and Training Data")
 plt.show()
 # %%
 
-figure, ax = plt.subplots(5, 6)
-
-# plotting outputs of each of the hidden layer neurons
-for y in range(1,6):
-    for x in range(1,7):
-        neuron_activation_value = []
-        num = (5*y) - (5-x)
-        for i in range(training_data.shape[0]):
-            neuron_activation_value.append(FCNN.classify_point(training_data.iloc[i,0:2].to_numpy())[1][1].gn[num])
-            FCNN.clean_layers()
-
-        ax[y-1,x-1] = plt.axes(projection='3d')
-        ax[y-1,x-1].scatter3D(training_data.x, training_data.y, neuron_activation_value, c=training_data["class"])
-
-        plt.xlabel("Input (x)")
-        plt.ylabel("Input (y)")
-        plt.title("Output of the hidden layer neurons")
-        # plt.legend(['Model Output', 'Target Output'])
-        # ax.legend(["Class-1", "Class-2", "Class-3"])
-        # plt.show()
-        # plt.close()
-plt.show()

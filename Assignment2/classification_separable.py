@@ -12,58 +12,76 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # %%
 # Reading training data
 data_c1_train = pd.read_csv(
-    r"Group24\Group24\Classification\LS_Group24\Class1.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
+    r"Group24\Group24\Classification\LS_Group24\Class1.txt", sep=" ", names=['x', 'y']).iloc[0:300, :]
 data_c2_train = pd.read_csv(
-    r"Group24\Group24\Classification\LS_Group24\Class2.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
+    r"Group24\Group24\Classification\LS_Group24\Class2.txt", sep=" ", names=['x', 'y']).iloc[0:300, :]
 data_c3_train = pd.read_csv(
-    r"Group24\Group24\Classification\LS_Group24\Class3.txt", sep=" ", names=['x', 'y']).iloc[0:350, :]
+    r"Group24\Group24\Classification\LS_Group24\Class3.txt", sep=" ", names=['x', 'y']).iloc[0:300, :]
 
-
+# %%
+# Reading validation data
+data_c1_validation = pd.read_csv(
+    r"Group24\Group24\Classification\LS_Group24\Class1.txt", sep=" ", names=['x', 'y']).iloc[300:400, :]
+data_c2_validation = pd.read_csv(
+    r"Group24\Group24\Classification\LS_Group24\Class2.txt", sep=" ", names=['x', 'y']).iloc[300:400, :]
+data_c3_validation = pd.read_csv(
+    r"Group24\Group24\Classification\LS_Group24\Class3.txt", sep=" ", names=['x', 'y']).iloc[300:400, :]
+# Creating one dataframe for validation data
+classes = []
+for i in range(3):
+    for j in range(len(data_c1_validation)):
+        classes.append(i+1)
+validation_data = pd.concat([data_c1_validation, data_c2_validation, data_c3_validation])
+validation_data['class'] = classes
 # %%
 # Reading testing data
 data_c1_test = pd.read_csv(
-    r"Group24\Group24\Classification\LS_Group24\Class1.txt", sep=" ", names=['x', 'y']).iloc[351:, :]
+    r"Group24\Group24\Classification\LS_Group24\Class1.txt", sep=" ", names=['x', 'y']).iloc[400:, :]
 data_c2_test = pd.read_csv(
-    r"Group24\Group24\Classification\LS_Group24\Class2.txt", sep=" ", names=['x', 'y']).iloc[351:, :]
+    r"Group24\Group24\Classification\LS_Group24\Class2.txt", sep=" ", names=['x', 'y']).iloc[400:, :]
 data_c3_test = pd.read_csv(
-    r"Group24\Group24\Classification\LS_Group24\Class3.txt", sep=" ", names=['x', 'y']).iloc[351:, :]
-
-# %%
-
-
-# %%
-# Model
+    r"Group24\Group24\Classification\LS_Group24\Class3.txt", sep=" ", names=['x', 'y']).iloc[400:, :]
 
 # %%
 # Making the model
 nodes_input_layer = 2
-nodes_hidden_layer = 50
+nodes_hidden_layer = 10
 nodes_output_layer = 3
 epochs = 20
-FCNN = Model()
+FCNN = Model(0.1)
 FCNN.add_layer(nodes_input_layer)
-FCNN.add_layer(10)
-# FCNN.add_layer(10)
-# FCNN.add_layer(2)
+FCNN.add_layer(nodes_hidden_layer)
 FCNN.add_layer(nodes_output_layer)
 
 # %%
 # Fitting the model to the data
 errors = []
+previous_validation_error = 100
+inc_val_er_streak = 0
 for epoch in range(1, epochs+1):
-    FCNN.eta = 1/epoch
+    # FCNN.eta = 1/epoch
     FCNN.fit(data_c1_train.to_numpy(), np.tile(np.array(
         [1, 0, 0]), data_c1_train.shape[0]).reshape(data_c1_train.shape[0], 3))
     FCNN.fit(data_c2_train.to_numpy(), np.tile(np.array(
         [0, 1, 0]), data_c2_train.shape[0]).reshape(data_c2_train.shape[0], 3))
     FCNN.fit(data_c3_train.to_numpy(), np.tile(np.array(
         [0, 0, 1]), data_c3_train.shape[0]).reshape(data_c3_train.shape[0], 3))
-    # print("Average training error = ", FCNN.avg_training_error())
     errors.append(FCNN.avg_training_error())
+
+    # Computing the validation error
+    prediction = FCNN.classify_batch(data_c1_validation.to_numpy())
+    prediction += FCNN.classify_batch(data_c2_validation.to_numpy())
+    prediction += FCNN.classify_batch(data_c3_validation.to_numpy())
+    current_validation_error = accuracy_score(validation_data["class"], prediction)
+    if(previous_validation_error < current_validation_error): 
+        inc_val_er_streak += 1
+        if(inc_val_er_streak >= 3): break
+    inc_val_er_streak = 0        
+    previous_validation_error = current_validation_error
 
 # %%
 # Plotting epoch vs training error
-plt.plot([i for i in range(1, epochs+1)], errors)
+plt.plot([i for i in range(len(errors))], errors)
 plt.title("Training error vs epoch")
 plt.xlabel("Epochs")
 plt.ylabel("Average Error")
@@ -93,7 +111,7 @@ plt.show()
 # Creating one dataframe for testing data
 classes = []
 for i in range(3):
-    for j in range(149):
+    for j in range(len(data_c1_test)):
         classes.append(i+1)
 test_data = pd.concat([data_c1_test, data_c2_test, data_c3_test])
 test_data['class'] = classes
@@ -121,7 +139,7 @@ yy = np.linspace(ymin-2, ymax+2, 100)
 training_data = pd.concat([data_c1_train, data_c2_train, data_c3_train])
 classes = []
 for i in range(3):
-    for j in range(350):
+    for j in range(len(data_c1_train)):
         classes.append(i+1)
 training_data['class'] = classes
 
@@ -132,7 +150,8 @@ for i in xx:
     for j in yy:
         cord = np.array([i, j])
         predicted_mesh = predicted_mesh.append(
-                {'x': cord[0], 'y': cord[1], 'pred': FCNN.classify_point(cord)}, ignore_index=True)
+                {'x': cord[0], 'y': cord[1], 'pred': FCNN.classify_point(cord)[0]}, ignore_index=True)
+        FCNN.clean_layers()
 
 #%%
 # Superimposing the decision boundary onto the training data
@@ -152,4 +171,25 @@ plt.xlabel("feature 1")
 plt.ylabel("feature 2")
 plt.title("Decision Regions and Training Data")
 plt.show()
+#%%
+
+# plotting outputs of each of the hidden layer neurons
+for l in range(1,nodes_hidden_layer):
+    neuron_activation_value = []
+    for i in range(training_data.shape[0]):
+        neuron_activation_value.append(FCNN.classify_point(training_data.iloc[i,0:2].to_numpy())[1][1].gn[l])
+        FCNN.clean_layers()
+
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.scatter3D(training_data.x, training_data.y, neuron_activation_value, c=training_data["class"])
+
+    plt.xlabel("Input (x)")
+    plt.ylabel("Input (y)")
+    plt.title("Output of the hidden layer neurons")
+    # plt.legend(['Model Output', 'Target Output'])
+    # ax.legend(["Class-1", "Class-2", "Class-3"])
+    plt.show()
+    plt.close()
+
 #%%

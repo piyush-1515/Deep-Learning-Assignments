@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from numpy import linalg as LA
 import matplotlib.pyplot as plt
-
+import copy 
 class Layer:
 
     num_nodes = int
@@ -28,14 +28,17 @@ class Model:
     weights = []
     total_error = []
     eta = int
+    validation_error = int
+    validation_data_given = bool
 
-    def __init__(self, eta=0.1, mode="class"):
+    def __init__(self, eta=0.1, mode="class", validation_data=False):
         self.eta = eta
         self.mode = mode
         self.num_layers = 0
         self.layers = []
         self.weights = []
         self.total_error = []
+        self.validation_data_given = validation_data
 
     def clean_layers(self):
         for l in self.layers:
@@ -132,8 +135,9 @@ class Model:
         op = float
         if(self.mode == "class") : op = int(np.argmax(self.layers[self.num_layers-1].gn[1:])+1)
         else: op = self.layers[self.num_layers-1].gn[1]
-        self.clean_layers()
-        return op
+        layers_data = copy.copy(self.layers)
+        # self.clean_layers()
+        return op,layers_data
 
     def avg_training_error(self):
         return np.mean(self.total_error)

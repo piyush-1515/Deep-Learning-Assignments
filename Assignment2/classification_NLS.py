@@ -31,32 +31,63 @@ c1_data = data.iloc[:300, :]
 c2_data = data.iloc[300:800, :]
 c3_data = data.iloc[800:1800, :]
 
-data_c1_train = c1_data.iloc[0:210, :]
-data_c2_train = c2_data.iloc[0:350, :]
-data_c3_train = c3_data.iloc[0:700, :]
+data_c1_train = c1_data.iloc[0:180, :]
+data_c2_train = c2_data.iloc[0:300, :]
+data_c3_train = c3_data.iloc[0:600, :]
 
-# %%
-data_c1_test = c1_data.iloc[210:, :]
-data_c2_test = c2_data.iloc[350:, :]
-data_c3_test = c3_data.iloc[700:, :]
+# Creating one dataframe for training data
+training_data = pd.concat([data_c1_train, data_c2_train, data_c3_train])
+classes = []
+for j in range(len(data_c1_train.x)):
+    classes.append(1)
+for j in range(len(data_c2_train.x)):
+    classes.append(2)
+for j in range(len(data_c3_train.x)):
+    classes.append(3)
+training_data['class'] = classes
 
-# %%
+data_c1_validation = c1_data.iloc[180:240, :]
+data_c2_validation = c2_data.iloc[300:400, :]
+data_c3_validation = c3_data.iloc[600:800, :]
+
+# Creating one dataframe for validation data
+validation_data = pd.concat([data_c1_validation, data_c2_validation, data_c3_validation])
+classes = []
+for j in range(len(data_c1_validation.x)):
+    classes.append(1)
+for j in range(len(data_c2_validation.x)):
+    classes.append(2)
+for j in range(len(data_c3_validation.x)):
+    classes.append(3)
+validation_data['class'] = classes
+
+data_c1_test = c1_data.iloc[240:, :]
+data_c2_test = c2_data.iloc[400:, :]
+data_c3_test = c3_data.iloc[800:, :]
+# Creating one dataframe for testing data
+classes = []
+for j in range(len(data_c1_test.x)):
+    classes.append(1)
+for j in range(len(data_c2_test.x)):
+    classes.append(2)
+for j in range(len(data_c3_test.x)):
+    classes.append(3)
+test_data = pd.concat([data_c1_test, data_c2_test, data_c3_test])
+test_data['class'] = classes
 
 # %%
 # Making the model
 epochs = 20
-FCNN = Model()
+FCNN = Model(0.01)
 FCNN.add_layer(2)
 FCNN.add_layer(30)
 FCNN.add_layer(30)
-# FCNN.add_layer(8)
 FCNN.add_layer(3)
 
 # %%
 # Fitting the model to the data
 errors = []
-for epoch in range(1, epochs+1):
-    # FCNN.eta = 1/epoch
+while True:
     FCNN.fit(data_c1_train.to_numpy(), np.tile(np.array(
         [1, 0, 0]), data_c1_train.shape[0]).reshape(data_c1_train.shape[0], 3))
     FCNN.fit(data_c2_train.to_numpy(), np.tile(np.array(
@@ -65,16 +96,16 @@ for epoch in range(1, epochs+1):
         [0, 0, 1]), data_c3_train.shape[0]).reshape(data_c3_train.shape[0], 3))
     # print("Average training error = ", FCNN.avg_training_error())
     errors.append(FCNN.avg_training_error())
+    if(len(errors)>1 and abs(errors[len(errors)-1]-errors[len(errors)-2])<0.0001): break
 
 # %%
 # Plotting epoch vs training error
-plt.plot([i for i in range(1, epochs+1)], errors)
+plt.plot([i for i in range(1, len(errors)+1)], errors)
 plt.title("Training error vs epoch")
 plt.xlabel("Epochs")
 plt.ylabel("Average Error")
 plt.grid()
 plt.show()
-# plt.savefig("./results/epoch_h1_{}_h2_{}.jpg".format(lay1,lay2))
 
 # %%
 # Classifying the testing data
@@ -94,18 +125,6 @@ plt.grid()
 plt.legend(['Class 1', 'Class 2', 'Class 3'])
 # plt.axis('off')
 # plt.show()
-
-# %%
-# Creating one dataframe for testing data
-classes = []
-for j in range(len(data_c1_test.x)):
-    classes.append(1)
-for j in range(len(data_c2_test.x)):
-    classes.append(2)
-for j in range(len(data_c3_test.x)):
-    classes.append(3)
-test_data = pd.concat([data_c1_test, data_c2_test, data_c3_test])
-test_data['class'] = classes
 
 # %%
 # Computing testing data classification accuacy
@@ -130,25 +149,13 @@ xx = np.linspace(xmin-2, xmax+2, 100)
 yy = np.linspace(ymin-2, ymax+2, 100)
 
 # %%
-# Combining training data
-training_data = pd.concat([data_c1_train, data_c2_train, data_c3_train])
-classes = []
-for j in range(len(data_c1_train.x)):
-    classes.append(1)
-for j in range(len(data_c2_train.x)):
-    classes.append(2)
-for j in range(len(data_c3_train.x)):
-    classes.append(3)
-training_data['class'] = classes
-
-# %%
 # Creating decision boundary between all classes
 predicted_mesh = pd.DataFrame(columns=['x', 'y', 'pred'])
 for i in xx:
     for j in yy:
         cord = np.array([i, j])
         predicted_mesh = predicted_mesh.append(
-            {'x': cord[0], 'y': cord[1], 'pred': FCNN.classify_point(cord)}, ignore_index=True)
+            {'x': cord[0], 'y': cord[1], 'pred': FCNN.classify_point(cord)[0]}, ignore_index=True)
 
 # %%
 # Superimposing the decision boundary onto the training data
@@ -166,8 +173,29 @@ ax.add_artist(legend1)
 
 plt.xlabel("feature 1")
 plt.ylabel("feature 2")
-plt.title("Decision Regions and Training Data")#, h1={}, h2={}".format(lay1,lay2))
-# plt.savefig('./results/h1_{}_h2_{}.jpg'.format(lay1,lay2))
+plt.title("Decision Regions and Training Data")
 plt.show()
 # %%
-# del FCNN
+
+figure, ax = plt.subplots(5, 6)
+
+# plotting outputs of each of the hidden layer neurons
+for y in range(1,6):
+    for x in range(1,7):
+        neuron_activation_value = []
+        num = (5*y) - (5-x)
+        for i in range(training_data.shape[0]):
+            neuron_activation_value.append(FCNN.classify_point(training_data.iloc[i,0:2].to_numpy())[1][1].gn[num])
+            FCNN.clean_layers()
+
+        ax[y-1,x-1] = plt.axes(projection='3d')
+        ax[y-1,x-1].scatter3D(training_data.x, training_data.y, neuron_activation_value, c=training_data["class"])
+
+        plt.xlabel("Input (x)")
+        plt.ylabel("Input (y)")
+        plt.title("Output of the hidden layer neurons")
+        # plt.legend(['Model Output', 'Target Output'])
+        # ax.legend(["Class-1", "Class-2", "Class-3"])
+        # plt.show()
+        # plt.close()
+plt.show()

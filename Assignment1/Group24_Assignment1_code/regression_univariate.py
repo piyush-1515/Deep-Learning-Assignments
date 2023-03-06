@@ -127,3 +127,5 @@ plt.bar(['Training', 'Testing'], [train_mse, test_mse], color='maroon', width=0.
 plt.title("Training and testing MSE")
 plt.ylabel("MSE values")
 plt.show()
+
+#%%
